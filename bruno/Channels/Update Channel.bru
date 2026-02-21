@@ -1,0 +1,31 @@
+meta {
+  name: Update Channel
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/channels/{{channelId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "updated-channel"
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Get User Servers
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/servers
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response is an array", function() {
+    expect(res.body.data).to.be.an('array');
+  });
+}

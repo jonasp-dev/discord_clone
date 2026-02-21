@@ -1,0 +1,97 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  avatar    String?
+  status    String   @default("online")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships    Membership[]
+  messages       Message[]
+  ownedServers   Server[]     @relation("ServerOwner")
+}
+
+model Server {
+  id          String   @id @default(cuid())
+  name        String
+  icon        String?
+  ownerId     String
+  inviteCode  String   @unique @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User         @relation("ServerOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  channels    Channel[]
+  memberships Membership[]
+
+  @@index([ownerId])
+}
+
+model Channel {
+  id        String      @id @default(cuid())
+  name      String
+  type      ChannelType @default(TEXT)
+  serverId  String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  server   Server    @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([serverId])
+}
+
+enum ChannelType {
+  TEXT
+  VOICE
+}
+
+model Membership {
+  id        String         @id @default(cuid())
+  userId    String
+  serverId  String
+  role      MembershipRole @default(MEMBER)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, serverId])
+  @@index([userId])
+  @@index([serverId])
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  channelId String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([channelId])
+  @@index([userId])
+  @@index([createdAt])
+}

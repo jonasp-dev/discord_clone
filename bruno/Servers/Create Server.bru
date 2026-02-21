@@ -1,0 +1,38 @@
+meta {
+  name: Create Server
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/servers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "My Test Server",
+    "icon": null
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("Response has server data", function() {
+    expect(res.body.data.id).to.be.a('string');
+    expect(res.body.data.inviteCode).to.be.a('string');
+    bru.setEnvVar("serverId", res.body.data.id);
+  });
+}

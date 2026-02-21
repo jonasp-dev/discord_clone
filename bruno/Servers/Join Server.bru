@@ -1,0 +1,31 @@
+meta {
+  name: Join Server
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/servers/join
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "inviteCode": "INVITE_CODE_HERE"
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

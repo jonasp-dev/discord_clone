@@ -1,0 +1,31 @@
+meta {
+  name: Get Channel Messages
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/messages/{{channelId}}?limit=50
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+params:query {
+  limit: 50
+  ~cursor: 
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response has pagination data", function() {
+    expect(res.body.data.data).to.be.an('array');
+    expect(res.body.data).to.have.property('hasMore');
+  });
+}
