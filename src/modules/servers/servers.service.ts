@@ -69,6 +69,18 @@ export class ServersService {
             memberships: true,
           },
         },
+        memberships: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+                status: true,
+              }
+            }
+          }
+        }
       },
     });
 
@@ -97,6 +109,12 @@ export class ServersService {
       inviteCode: server.inviteCode,
       createdAt: server.createdAt,
       memberCount: server._count.memberships,
+      members: server.memberships.map(m => ({
+        id: m.user.id,
+        username: m.user.username,
+        avatar: m.user.avatar,
+        status: m.user.status,
+      })),
       channels: server.channels,
     };
   }

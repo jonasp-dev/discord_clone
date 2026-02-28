@@ -41,6 +41,12 @@ export interface ServerResponse {
   inviteCode: string;
   createdAt: Date;
   memberCount?: number;
+  members?: {
+    id: string;
+    username: string;
+    avatar: string | null;
+    status: string;
+  }[];
   channels?: ChannelResponse[];
 }
 
