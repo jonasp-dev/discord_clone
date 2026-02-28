@@ -23,6 +23,8 @@ model User {
   ownedServers             Server[]                  @relation("ServerOwner")
   conversationParticipants ConversationParticipant[]
   directMessages           DirectMessage[]
+
+  @@map("users")
 }
 
 model Server {
@@ -39,6 +41,7 @@ model Server {
   memberships Membership[]
 
   @@index([ownerId])
+  @@map("servers")
 }
 
 model Channel {
@@ -53,6 +56,7 @@ model Channel {
   messages Message[]
 
   @@index([serverId])
+  @@map("channels")
 }
 
 enum ChannelType {
@@ -74,6 +78,7 @@ model Membership {
   @@unique([userId, serverId])
   @@index([userId])
   @@index([serverId])
+  @@map("memberships")
 }
 
 enum MembershipRole {
@@ -96,6 +101,7 @@ model Message {
   @@index([channelId])
   @@index([userId])
   @@index([createdAt])
+  @@map("messages")
 }
 
 // ─── Direct Messaging Models ────────────────────────────────────────────
@@ -109,6 +115,8 @@ model Conversation {
 
   participants ConversationParticipant[]
   messages     DirectMessage[]
+
+  @@map("conversations")
 }
 
 model ConversationParticipant {
@@ -123,6 +131,7 @@ model ConversationParticipant {
   @@unique([conversationId, userId])
   @@index([userId])
   @@index([conversationId])
+  @@map("conversation_participants")
 }
 
 model DirectMessage {
@@ -138,4 +147,5 @@ model DirectMessage {
 
   @@index([conversationId, createdAt])
   @@index([senderId])
+  @@map("direct_messages")
 }
