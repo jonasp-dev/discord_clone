@@ -58,3 +58,28 @@ export async function requireMessagePermission(userId: string, channelId: string
     throw new ForbiddenException('You do not have permission to send messages in this channel');
   }
 }
+
+export async function canDeleteMessage(userId: string, channelId: string): Promise<boolean> {
+  const channel = await prisma.channel.findUnique({
+    where: { id: channelId },
+    select: { serverId: true },
+  });
+
+  if (!channel) {
+    throw new NotFoundException('Channel not found');
+  }
+
+  // Only ADMIN or OWNER can delete other users' messages
+  return canManageServer(userId, channel.serverId);
+}
+
+export async function requireMessageDeletion(userId: string, messageUserId: string, channelId: string): Promise<void> {
+  // Message author can always delete their own messages
+  if (userId === messageUserId) return;
+
+  // Otherwise, user must be an admin/owner of the server
+  const canDelete = await canDeleteMessage(userId, channelId);
+  if (!canDelete) {
+    throw new ForbiddenException('You do not have permission to delete this message');
+  }
+}

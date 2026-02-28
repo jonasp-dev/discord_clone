@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { prisma } from '../db/prisma';
 import { logger } from '../config/logger';
 import { pubsub } from '../redis/pubsub';
+import { canSendMessage } from '../utils/permissions';
 import { NewMessagePayload } from './socket.types';
 
 export class MessageGateway {
@@ -19,13 +20,20 @@ export class MessageGateway {
     });
   }
 
-  handleNewMessage(socket: Socket, payload: NewMessagePayload) {
+  async handleNewMessage(socket: Socket, payload: NewMessagePayload) {
     const userId = (socket as any).user.id;
 
     logger.debug({ userId, channelId: payload.channelId }, 'New message event');
 
-    prisma.message
-      .create({
+    try {
+      // Verify user has permission to send messages in this channel
+      const hasPermission = await canSendMessage(userId, payload.channelId);
+      if (!hasPermission) {
+        socket.emit('error', { message: 'You do not have permission to send messages in this channel' });
+        return;
+      }
+
+      const message = await prisma.message.create({
         data: {
           content: payload.content,
           channelId: payload.channelId,
@@ -40,14 +48,13 @@ export class MessageGateway {
             },
           },
         },
-      })
-      .then((message) => {
-        pubsub.publish('message:new', JSON.stringify(message));
-      })
-      .catch((error) => {
-        logger.error(error, 'Failed to create message');
-        socket.emit('error', { message: 'Failed to send message' });
       });
+
+      pubsub.publish('message:new', JSON.stringify(message));
+    } catch (error) {
+      logger.error(error, 'Failed to create message');
+      socket.emit('error', { message: 'Failed to send message' });
+    }
   }
 
   handleTyping(socket: Socket, payload: { channelId: string }) {

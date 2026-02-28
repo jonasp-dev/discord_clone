@@ -1,0 +1,25 @@
+meta {
+  name: Get Conversation
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/dms/{{conversationId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response has conversation data", function() {
+    expect(res.body.data.id).to.equal(bru.getEnvVar("conversationId"));
+  });
+}

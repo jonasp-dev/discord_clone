@@ -3,13 +3,14 @@ import cors from 'cors';
 import { env } from './config/env';
 import { logger } from './config/logger';
 import { errorMiddleware } from './middleware/error.middleware';
-import { globalRateLimiter, authRateLimiter } from './middleware/rate-limit.middleware';
+import { globalRateLimiter, authRateLimiter, messageRateLimiter } from './middleware/rate-limit.middleware';
 
 import authRoutes from './modules/auth/auth.routes';
 import usersRoutes from './modules/users/users.routes';
 import serversRoutes from './modules/servers/servers.routes';
 import channelsRoutes from './modules/channels/channels.routes';
 import messagesRoutes from './modules/messages/messages.routes';
+import dmsRoutes from './modules/dms/dms.routes';
 
 export function createApp(): Express {
   const app = express();
@@ -32,7 +33,8 @@ export function createApp(): Express {
   app.use('/api/v1/users', usersRoutes);
   app.use('/api/v1/servers', serversRoutes);
   app.use('/api/v1/channels', channelsRoutes);
-  app.use('/api/v1/messages', messagesRoutes);
+  app.use('/api/v1/messages', messageRateLimiter, messagesRoutes);
+  app.use('/api/v1/dms', dmsRoutes);
 
   app.use(errorMiddleware);
 

@@ -1,0 +1,36 @@
+meta {
+  name: Send DM
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/dms/{{conversationId}}/messages
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "content": "Hey! This is a direct message."
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response has DM data", function() {
+    expect(res.body.data.id).to.be.a('string');
+    bru.setEnvVar("dmMessageId", res.body.data.id);
+  });
+}

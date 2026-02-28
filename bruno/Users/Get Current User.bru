@@ -14,6 +14,11 @@ auth:bearer {
   token: {{accessToken}}
 }
 
+vars:pre-request {
+  baseUrl: http://localhost:3000
+  accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW02bXBkamkwMDAwc2gzc3RnbXl4c2k4IiwiZW1haWwiOiJqb25hc0BnbWFpbC5jb20iLCJpYXQiOjE3NzIzMDE3NTQsImV4cCI6MTc3MjMwMjY1NH0.Ck2WWgBm2_mzEWJBewXStkHrLjlQmN6VoSFsjn-s_uo
+}
+
 tests {
   test("Status code is 200", function() {
     expect(res.getStatus()).to.equal(200);

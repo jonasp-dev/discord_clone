@@ -6,16 +6,19 @@ import { prisma } from '../db/prisma';
 import { MessageGateway } from './message.gateway';
 import { ChannelGateway } from './channel.gateway';
 import { PresenceGateway } from './presence.gateway';
+import { DmGateway } from './dm.gateway';
 
 export class SocketEvents {
   private messageGateway: MessageGateway;
   private channelGateway: ChannelGateway;
   private presenceGateway: PresenceGateway;
+  private dmGateway: DmGateway;
 
   constructor(private io: Server) {
     this.messageGateway = new MessageGateway(io);
     this.channelGateway = new ChannelGateway(io);
     this.presenceGateway = new PresenceGateway(io);
+    this.dmGateway = new DmGateway(io);
     
     this.initializeSocketAuth();
     this.setupConnectionHandler();
@@ -54,8 +57,12 @@ export class SocketEvents {
       const user = (socket as any).user;
       logger.info({ userId: user.id, socketId: socket.id }, 'Client connected');
 
+      // Join a personal room for DM delivery
+      socket.join(`user:${user.id}`);
+
       this.presenceGateway.handleConnection(socket);
 
+      // Channel events
       socket.on('channel:join', (payload) => {
         this.channelGateway.handleJoinChannel(socket, payload);
       });
@@ -64,6 +71,7 @@ export class SocketEvents {
         this.channelGateway.handleLeaveChannel(socket, payload);
       });
 
+      // Channel message events
       socket.on('message:send', (payload) => {
         this.messageGateway.handleNewMessage(socket, payload);
       });
@@ -76,6 +84,20 @@ export class SocketEvents {
         this.messageGateway.handleStopTyping(socket, payload);
       });
 
+      // Direct message events
+      socket.on('dm:send', (payload) => {
+        this.dmGateway.handleSendDm(socket, payload);
+      });
+
+      socket.on('dm:typing:start', (payload) => {
+        this.dmGateway.handleTyping(socket, payload);
+      });
+
+      socket.on('dm:typing:stop', (payload) => {
+        this.dmGateway.handleStopTyping(socket, payload);
+      });
+
+      // Presence events
       socket.on('presence:status', (payload) => {
         this.presenceGateway.handleStatusChange(socket, payload);
       });

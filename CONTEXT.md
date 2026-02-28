@@ -6,7 +6,7 @@ This document tracks the current state and progress of the Discord clone backend
 
 The backend is a Node.js/Express application with Socket.io for real-time WebSocket communication. It provides REST APIs for CRUD operations and WebSocket events for real-time messaging, typing indicators, and presence updates.
 
-## Current Status: Phase 1 ✅ COMPLETED
+## Current Status: Phase 1 ✅ COMPLETED + Phase 2 (DMs) ✅ IN PROGRESS
 
 ### Implemented Features
 
@@ -24,7 +24,8 @@ The backend is a Node.js/Express application with Socket.io for real-time WebSoc
 - ✅ User registration and login
 - ✅ Password hashing with bcrypt
 - ✅ Auth middleware for protected routes
-- ✅ Socket.io authentication middleware
+- ✅ Socket.io authentication middleware (JWT-verified)
+- ✅ Logout with Redis-backed refresh token revocation
 
 #### Data Models (Prisma Schema)
 - ✅ User (email, username, password, avatar, status)
@@ -32,6 +33,9 @@ The backend is a Node.js/Express application with Socket.io for real-time WebSoc
 - ✅ Channel (name, type: TEXT/VOICE)
 - ✅ Membership (user-server relationship with roles: OWNER/ADMIN/MEMBER)
 - ✅ Message (content, channel, user, timestamps)
+- ✅ Conversation (DM conversations, 1:1)
+- ✅ ConversationParticipant (user-conversation relationship)
+- ✅ DirectMessage (DM content, sender, conversation)
 
 #### REST API Endpoints
 
@@ -39,6 +43,7 @@ The backend is a Node.js/Express application with Socket.io for real-time WebSoc
 - POST `/register` - User registration
 - POST `/login` - User login
 - POST `/refresh` - Refresh access token
+- POST `/logout` - Logout (revokes refresh token in Redis)
 
 **Users** (`/api/v1/users`)
 - GET `/me` - Get current user profile
@@ -64,9 +69,17 @@ The backend is a Node.js/Express application with Socket.io for real-time WebSoc
 
 **Messages** (`/api/v1/messages`)
 - POST `/:channelId` - Send message
-- GET `/:channelId` - Get channel messages (paginated)
+- GET `/:channelId` - Get channel messages (cursor-based pagination by ID)
 - GET `/message/:messageId` - Get message by ID
-- DELETE `/:messageId` - Delete message
+- DELETE `/:messageId` - Delete message (author or ADMIN/OWNER)
+
+**Direct Messages** (`/api/v1/dms`)
+- POST `/` - Create or get a 1:1 conversation
+- GET `/` - Get user's conversations (with last message preview)
+- GET `/:conversationId` - Get conversation details
+- GET `/:conversationId/messages` - Get DM messages (cursor-based pagination)
+- POST `/:conversationId/messages` - Send a direct message
+- DELETE `/messages/:messageId` - Delete a direct message (sender only)
 
 #### WebSocket Events
 
@@ -86,6 +99,12 @@ The backend is a Node.js/Express application with Socket.io for real-time WebSoc
 - `typing:start` - User started typing
 - `typing:stop` - User stopped typing
 
+**Direct Messaging**
+- `dm:send` - Send a direct message (via WebSocket)
+- `dm:new` - Broadcast new DM to participants
+- `dm:typing:start` - User started typing in DM
+- `dm:typing:stop` - User stopped typing in DM
+
 **Presence**
 - `presence:status` - Update user status
 - `presence:update` - Broadcast status change
@@ -94,16 +113,25 @@ The backend is a Node.js/Express application with Socket.io for real-time WebSoc
 - ✅ Global error handling middleware
 - ✅ Rate limiting (global, auth, messages)
 - ✅ Request validation with Zod schemas
-- ✅ Permission checking utilities
-- ✅ Cursor-based pagination for messages
+- ✅ Permission checking utilities (canAccessServer, canManageServer, requireMessageDeletion)
+- ✅ Cursor-based pagination for messages (ID-based cursors)
 - ✅ HTTP exception classes
 
 #### Real-Time Features
-- ✅ WebSocket authentication
-- ✅ Channel room management (join/leave)
-- ✅ Real-time message broadcasting via Redis pub/sub
-- ✅ Typing indicators
-- ✅ User presence tracking (online/offline/idle/dnd)
+- ✅ WebSocket authentication (JWT-verified)
+- ✅ Channel room management (join/leave) with server membership verification
+- ✅ Real-time message broadcasting via Redis pub/sub (single subscriber connection)
+- ✅ Typing indicators (channels and DMs)
+- ✅ User presence tracking via Redis (cross-instance compatible)
+- ✅ DM delivery via per-user socket rooms (`user:{userId}`)
+
+#### Testing
+- ✅ Vitest test framework with v8 coverage
+- ✅ Unit tests: auth service (6 tests)
+- ✅ Unit tests: messages service (9 tests)
+- ✅ Unit tests: DMs service (10 tests)
+- ✅ Unit tests: permissions utilities (15 tests)
+- ✅ 40 total tests passing
 
 ## Tech Stack
 
@@ -112,11 +140,12 @@ The backend is a Node.js/Express application with Socket.io for real-time WebSoc
 - **WebSocket:** Socket.io
 - **Database:** PostgreSQL
 - **ORM:** Prisma
-- **Cache/PubSub:** Redis
-- **Auth:** JWT (jsonwebtoken)
+- **Cache/PubSub:** ValKey 8 (Redis-compatible)
+- **Auth:** JWT (jsonwebtoken) with Redis-backed token revocation
 - **Validation:** Zod
 - **Logging:** Pino
 - **Language:** TypeScript (strict mode)
+- **Testing:** Vitest + supertest
 
 ## Project Structure
 
@@ -138,11 +167,25 @@ The backend is a Node.js/Express application with Socket.io for real-time WebSoc
     schema.prisma     # Database schema
 ```
 
+## Phase 1 Hardening (Completed)
+
+The following security and reliability fixes were applied to the Phase 1 codebase:
+
+- **WebSocket channel auth** — `channel:join` now verifies server membership before granting room access
+- **WebSocket message auth** — `message:send` checks `canSendMessage` permission before creating
+- **Message deletion permissions** — ADMIN/OWNER can delete any message in their server; regular members can only delete their own
+- **Rate limiter on messages** — Dedicated `messageRateLimiter` applied to `/api/v1/messages` route
+- **Redis-backed presence** — Replaced in-memory presence tracking with Redis sets/hashes; cross-instance compatible
+- **Pub/sub subscriber reuse** — Single dedicated subscriber connection instead of one per subscription
+- **ID-based cursor pagination** — Messages use Prisma cursor (by ID) instead of timestamp-based pagination
+- **Logout / token revocation** — `POST /auth/logout` revokes refresh tokens in Redis; `refreshToken()` validates token exists before reissuing
+- **ValKey 8** — Docker Compose updated from Redis 7 to ValKey 8
+
 ## Next Steps: Phase 2 (Future)
 
 ### Planned Features
+- [x] Direct messaging (DMs) between users
 - [ ] Role-based permission system (custom roles)
-- [ ] Direct messaging (DMs) between users
 - [ ] Rich media support (file uploads, markdown)
 - [ ] URL previews/unfurling
 - [ ] Enhanced presence (Rich Presence)
@@ -174,6 +217,15 @@ npm start
 
 # Open Prisma Studio
 npm run prisma:studio
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
 ## Environment Setup
@@ -193,10 +245,11 @@ Copy `.env.example` to `.env` and configure:
 3. Run migrations: `npm run prisma:migrate`
 4. (Optional) Seed data if needed
 
-## Redis Setup
+## Redis / ValKey Setup
 
-1. Ensure Redis is running locally or configure REDIS_URL
+1. Ensure ValKey 8 (or Redis) is running locally or configure REDIS_URL
 2. Default: `redis://localhost:6379`
+3. Docker Compose starts ValKey 8 automatically
 
 ## Notes for Future Development
 

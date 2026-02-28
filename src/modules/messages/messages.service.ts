@@ -1,6 +1,6 @@
 import { prisma } from '../../db/prisma';
 import { NotFoundException } from '../../utils/http-exception';
-import { requireMessagePermission } from '../../utils/permissions';
+import { requireMessagePermission, requireMessageDeletion } from '../../utils/permissions';
 import { PaginatedResult, getPaginationLimit } from '../../utils/pagination';
 import { CreateMessageDto, MessageResponse } from './messages.types';
 
@@ -49,12 +49,11 @@ export class MessagesService {
     const messages = await prisma.message.findMany({
       where: {
         channelId,
-        ...(cursor && {
-          createdAt: {
-            lt: new Date(cursor),
-          },
-        }),
       },
+      ...(cursor && {
+        cursor: { id: cursor },
+        skip: 1, // Skip the cursor item itself
+      }),
       include: {
         user: {
           select: {
@@ -72,7 +71,7 @@ export class MessagesService {
 
     const hasMore = messages.length > pageSize;
     const data = hasMore ? messages.slice(0, pageSize) : messages;
-    const nextCursor = hasMore ? data[data.length - 1].createdAt.toISOString() : null;
+    const nextCursor = hasMore ? data[data.length - 1].id : null;
 
     return {
       data,
@@ -113,9 +112,7 @@ export class MessagesService {
       throw new NotFoundException('Message not found');
     }
 
-    if (message.userId !== userId) {
-      await requireMessagePermission(userId, message.channelId);
-    }
+    await requireMessageDeletion(userId, message.userId, message.channelId);
 
     await prisma.message.delete({
       where: { id: messageId },

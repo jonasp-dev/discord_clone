@@ -2,8 +2,26 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../db/prisma';
 import { env } from '../../config/env';
-import { ConflictException, UnauthorizedException } from '../../utils/http-exception';
+import { getRedisClient } from '../../redis/redis.client';
+import { ConflictException, HttpException, UnauthorizedException } from '../../utils/http-exception';
 import { RegisterDto, LoginDto, AuthResponse, JwtPayload } from './auth.types';
+
+const REFRESH_TOKEN_PREFIX = 'refresh_token:';
+
+/** Parse a JWT duration string like '7d', '15m', '1h' into seconds */
+function parseDurationToSeconds(duration: string): number {
+  const match = duration.match(/^(\d+)([smhd])$/);
+  if (!match) return 7 * 24 * 60 * 60; // default 7 days
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  switch (unit) {
+    case 's': return value;
+    case 'm': return value * 60;
+    case 'h': return value * 3600;
+    case 'd': return value * 86400;
+    default: return 7 * 86400;
+  }
+}
 
 export class AuthService {
   private readonly SALT_ROUNDS = 10;
@@ -38,6 +56,9 @@ export class AuthService {
     const accessToken = this.generateAccessToken(user.id, user.email);
     const refreshToken = this.generateRefreshToken(user.id, user.email);
 
+    // Store refresh token in Redis with TTL
+    await this.storeRefreshToken(refreshToken, user.id);
+
     return {
       user: {
         id: user.id,
@@ -69,6 +90,9 @@ export class AuthService {
     const accessToken = this.generateAccessToken(user.id, user.email);
     const refreshToken = this.generateRefreshToken(user.id, user.email);
 
+    // Store refresh token in Redis with TTL
+    await this.storeRefreshToken(refreshToken, user.id);
+
     return {
       user: {
         id: user.id,
@@ -86,6 +110,12 @@ export class AuthService {
     try {
       const payload = jwt.verify(token, env.JWT_REFRESH_SECRET) as JwtPayload;
 
+      // Verify token exists in Redis (hasn't been revoked/logged out)
+      const isValid = await this.isRefreshTokenValid(token);
+      if (!isValid) {
+        throw new UnauthorizedException('Refresh token has been revoked');
+      }
+
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
       });
@@ -94,8 +124,14 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
+      // Revoke old refresh token and issue new ones
+      await this.revokeRefreshToken(token);
+
       const accessToken = this.generateAccessToken(user.id, user.email);
       const refreshToken = this.generateRefreshToken(user.id, user.email);
+
+      // Store new refresh token
+      await this.storeRefreshToken(refreshToken, user.id);
 
       return {
         user: {
@@ -109,6 +145,7 @@ export class AuthService {
         refreshToken,
       };
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -134,6 +171,27 @@ export class AuthService {
     return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
       expiresIn: env.JWT_REFRESH_EXPIRES_IN
     } as any);
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    await this.revokeRefreshToken(refreshToken);
+  }
+
+  private async storeRefreshToken(token: string, userId: string): Promise<void> {
+    const redis = getRedisClient();
+    const ttl = parseDurationToSeconds(env.JWT_REFRESH_EXPIRES_IN);
+    await redis.set(`${REFRESH_TOKEN_PREFIX}${token}`, userId, { EX: ttl });
+  }
+
+  private async isRefreshTokenValid(token: string): Promise<boolean> {
+    const redis = getRedisClient();
+    const result = await redis.get(`${REFRESH_TOKEN_PREFIX}${token}`);
+    return result !== null;
+  }
+
+  private async revokeRefreshToken(token: string): Promise<void> {
+    const redis = getRedisClient();
+    await redis.del(`${REFRESH_TOKEN_PREFIX}${token}`);
   }
 }
 

@@ -26,3 +26,14 @@ export interface PresencePayload {
   userId: string;
   status: 'online' | 'offline' | 'idle' | 'dnd';
 }
+
+// ─── Direct Messaging Payloads ──────────────────────────────────────────
+
+export interface DmSendPayload {
+  conversationId: string;
+  content: string;
+}
+
+export interface DmTypingPayload {
+  conversationId: string;
+}

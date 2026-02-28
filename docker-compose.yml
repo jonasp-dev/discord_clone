@@ -17,16 +17,16 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: discord-clone-redis
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: discord-clone-valkey
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - valkey_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,7 +43,7 @@ services:
       NODE_ENV: development
       PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/discord_clone
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://valkey:6379
       JWT_SECRET: dev-jwt-secret-change-in-production
       JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production
       JWT_EXPIRES_IN: 15m
@@ -52,7 +52,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_healthy
     volumes:
       - ./src:/app/src
@@ -62,4 +62,4 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
+  valkey_data:

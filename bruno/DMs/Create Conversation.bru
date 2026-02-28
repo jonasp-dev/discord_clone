@@ -1,0 +1,36 @@
+meta {
+  name: Create Conversation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/dms
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "targetUserId": "{{targetUserId}}"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response has conversation data", function() {
+    expect(res.body.data.id).to.be.a('string');
+    bru.setEnvVar("conversationId", res.body.data.id);
+  });
+}

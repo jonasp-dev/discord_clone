@@ -20,6 +20,11 @@ body:json {
   }
 }
 
+vars:pre-request {
+  refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW02bXBkamkwMDAwc2gzc3RnbXl4c2k4IiwiZW1haWwiOiJqb25hc0BnbWFpbC5jb20iLCJpYXQiOjE3NzIzMDE3NTQsImV4cCI6MTc3MjkwNjU1NH0.-Ofj-I7Jo7wLDniXSuzhgPRwsLDcTnkYYVKpNj0XSh0
+  baseUrl: http://localhost:3000
+}
+
 tests {
   test("Status code is 200", function() {
     expect(res.getStatus()).to.equal(200);

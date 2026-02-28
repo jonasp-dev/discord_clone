@@ -33,6 +33,16 @@ export class AuthController {
       next(error);
     }
   }
+
+  async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { refreshToken } = req.body;
+      await authService.logout(refreshToken);
+      res.status(200).json(successResponse({ message: 'Logged out successfully' }));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const authController = new AuthController();
