@@ -16,9 +16,13 @@ headers {
 
 body:json {
   {
-    "email": "user@example.com",
+    "email": "jonas@example.com",
     "password": "password123"
   }
+}
+
+vars:pre-request {
+  baseUrl: http:localhost:3000
 }
 
 tests {
