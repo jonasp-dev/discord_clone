@@ -10,10 +10,7 @@ These rules apply to both AI agents and human contributors.
 
 ## 1. Make Small, Safe Changes
 - Prefer small, incremental changes over large rewrites.
-- Default limits per iteration:
-  - ≤ 300 lines changed
-  - ≤ 5 files modified
-- If exceeding limits, explicitly justify why.
+- Avoid risky refactors or optimizations unless explicitly required.
 
 ## 2. Do Not Modify Unrelated Code
 - Only change code required for the task.
