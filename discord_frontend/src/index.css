@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Discord-like dark theme.
+ * shadcn/ui compatible CSS variables.
+ */
+
+/* shadcn/ui CSS variables — dark only */
+:root {
+  --radius: 0.5rem;
+
+  --background: #313338;
+  --foreground: #F2F3F5;
+
+  --card: #2B2D31;
+  --card-foreground: #F2F3F5;
+
+  --popover: #111214;
+  --popover-foreground: #F2F3F5;
+
+  --primary: #5865F2;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #4E5058;
+  --secondary-foreground: #F2F3F5;
+
+  --muted: #2B2D31;
+  --muted-foreground: #949BA4;
+
+  --accent: #3F4147;
+  --accent-foreground: #F2F3F5;
+
+  --destructive: #ED4245;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #3F4147;
+  --input: #1E1F22;
+  --ring: #5865F2;
+
+  --sidebar-background: #2B2D31;
+  --sidebar-foreground: #F2F3F5;
+  --sidebar-primary: #5865F2;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #3F4147;
+  --sidebar-accent-foreground: #F2F3F5;
+  --sidebar-border: #3F4147;
+  --sidebar-ring: #5865F2;
+}
+
+/* Global styles */
+* {
+  border-color: var(--border);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling — Discord like */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a1b1e;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #202225;
+}
+
+/* Hide scrollbar for specific containers */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
