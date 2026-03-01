@@ -1,0 +1,13 @@
+# =============================================================================
+# Discord Clone — Terraform Variables
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values:
+#   cp terraform.tfvars.example terraform.tfvars
+# =============================================================================
+
+region           = "us-east-1"
+environment      = "production"
+instance_type    = "t4g.small"
+key_pair_name    = "your-key-pair-name"   # Create in AWS Console → EC2 → Key Pairs
+allowed_ssh_cidr = "0.0.0.0/0"            # Replace with your IP: "203.0.113.10/32"
+volume_size      = 20
