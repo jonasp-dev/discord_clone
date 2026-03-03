@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useConversations } from '@/hooks/queries/useDMs';
 import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 import { UserPanel } from '@/components/layout/UserPanel';
 import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -15,14 +16,24 @@ export function DMSidebar() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const { data: conversations, isLoading } = useConversations();
   const currentUserId = useAuthStore((s) => s.user?.id);
+  const openModal = useUIStore((s) => s.openModal);
 
   return (
     <div className="flex h-full w-60 flex-shrink-0 flex-col bg-discord-bg-secondary">
       {/* Header */}
-      <div className="flex h-12 items-center border-b border-discord-bg-tertiary/50 px-4 shadow-sm">
+      <div className="flex h-12 items-center justify-between border-b border-discord-bg-tertiary/50 px-4 shadow-sm">
         <h2 className="truncate text-sm font-semibold text-discord-text-primary">
           Direct Messages
         </h2>
+        <button
+          onClick={() => openModal('newDM')}
+          title="New Direct Message"
+          className="flex-shrink-0 rounded p-0.5 text-discord-text-muted transition-colors hover:text-discord-text-primary"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 11H13V4a1 1 0 0 0-2 0v7H4a1 1 0 0 0 0 2h7v7a1 1 0 0 0 2 0v-7h7a1 1 0 0 0 0-2z" />
+          </svg>
+        </button>
       </div>
 
       {/* Conversation list */}

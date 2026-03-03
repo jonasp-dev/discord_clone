@@ -8,6 +8,8 @@ import { MessageInput } from '@/components/message/MessageInput';
 import { CreateServerModal } from '@/components/server/CreateServerModal';
 import { JoinServerModal } from '@/components/server/JoinServerModal';
 import { CreateChannelModal } from '@/components/channel/CreateChannelModal';
+import { NewDMModal } from '@/components/dm/NewDMModal';
+import { InviteModal } from '@/components/server/InviteModal';
 import { useUIStore } from '@/stores/uiStore';
 import { useChannel } from '@/hooks/queries/useChannels';
 
@@ -96,6 +98,8 @@ export function AppLayout() {
       {activeModal === 'createServer' && <CreateServerModal />}
       {activeModal === 'joinServer' && <JoinServerModal />}
       {activeModal === 'createChannel' && <CreateChannelModal />}
+      {activeModal === 'newDM' && <NewDMModal />}
+      {activeModal === 'serverInvite' && <InviteModal />}
     </div>
   );
 }

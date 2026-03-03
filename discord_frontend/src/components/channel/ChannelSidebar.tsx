@@ -55,6 +55,15 @@ export function ChannelSidebar() {
         <h2 className="truncate text-sm font-semibold text-discord-text-primary">
           {server?.name ?? 'Loading...'}
         </h2>
+        <button
+          onClick={() => openModal('serverInvite')}
+          title="Invite People"
+          className="flex-shrink-0 rounded p-0.5 text-discord-text-muted transition-colors hover:text-discord-text-primary"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm-3-5a5 5 0 1 0 0 10A5 5 0 0 0 12 7zm7 5a1 1 0 0 1-1 1h-1v1a1 1 0 0 1-2 0v-1h-1a1 1 0 0 1 0-2h1v-1a1 1 0 0 1 2 0v1h1a1 1 0 0 1 1 1z" />
+          </svg>
+        </button>
       </div>
 
       {/* Channel list */}
