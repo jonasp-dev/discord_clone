@@ -94,11 +94,14 @@ export class DmsService {
 
   /**
    * List all conversations for a user, with last message preview.
+   * Only returns conversations that have at least one message — empty
+   * conversations are hidden from both participants until the first message.
    */
   async getUserConversations(userId: string): Promise<ConversationResponse[]> {
     const conversations = await prisma.conversation.findMany({
       where: {
         participants: { some: { userId } },
+        messages: { some: {} },
       },
       include: {
         participants: {

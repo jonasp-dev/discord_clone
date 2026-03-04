@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ServerSidebar } from '@/components/layout/ServerSidebar';
 import { ChannelSidebar } from '@/components/channel/ChannelSidebar';
 import { DMSidebar } from '@/components/dm/DMSidebar';
@@ -12,6 +14,8 @@ import { NewDMModal } from '@/components/dm/NewDMModal';
 import { InviteModal } from '@/components/server/InviteModal';
 import { useUIStore } from '@/stores/uiStore';
 import { useChannel } from '@/hooks/queries/useChannels';
+import { getCurrentSocket } from '@/lib/socket';
+import { QUERY_KEYS } from '@/lib/constants';
 
 /** Full channel view — header + message list + input. */
 function ChannelView() {
@@ -37,6 +41,24 @@ function ChannelView() {
  */
 export function AppLayout() {
   const activeModal = useUIStore((s) => s.activeModal);
+  const queryClient = useQueryClient();
+
+  // Global dm:new listener — always active regardless of current route so
+  // the recipient's DM sidebar refreshes as soon as the first message arrives,
+  // even before they've opened the conversation.
+  useEffect(() => {
+    const socket = getCurrentSocket();
+    if (!socket) return;
+
+    const handleDMNew = () => {
+      queryClient.refetchQueries({ queryKey: QUERY_KEYS.conversations });
+    };
+
+    socket.on('dm:new', handleDMNew);
+    return () => {
+      socket.off('dm:new', handleDMNew);
+    };
+  }, [queryClient]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-discord-bg-primary">
